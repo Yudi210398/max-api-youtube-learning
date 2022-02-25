@@ -10,8 +10,14 @@ export const ordersGet = async (req, res, next) => {
 
 export const ordersPost = async (req, res, next) => {
   try {
+    const order = {
+      produkId: req.body.produkId,
+      quantity: req.body.quantity,
+    };
+
     res.status(201).json({
       message: "dari orders POST",
+      order,
     });
   } catch (err) {
     console.log(`error`, err);
