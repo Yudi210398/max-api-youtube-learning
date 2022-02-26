@@ -1,22 +1,38 @@
 import Produk from "../model/produk.js";
-
+import { validationResult } from "express-validator";
 export const tryApiGet = async (req, res, next) => {
   try {
-    let data = await Produk.find();
-
-    if (data.length > 0)
+    let data = await Produk.find().select(
+      "_id namaProduk createdAt harga updatedAt"
+    );
+    let dataHasil = {
+      JumlahData: data.length,
+      data,
+    };
+    if (dataHasil.data.length > 0)
       res.status(200).json({
         message: "Berhasil dapat Produk",
-        data,
+        dataHasil,
       });
-    else res.status(200).json({ message: "Data Kosong", data });
+    else res.status(200).json({ message: "Data Gk ada", dataHasil });
   } catch (err) {
-    console.log(`error`, err);
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
   }
 };
 
 export const tryApiPost = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    console.log(errors);
+
+    if (!errors.isEmpty()) {
+      let error = new Error(
+        `${errors.errors[0].msg} di bidang ${errors.errors[0].param}`
+      );
+      error.statusCode = 422;
+      throw error;
+    }
     const produk = await new Produk({
       namaProduk: req.body.namaProduk,
       harga: req.body.harga,
@@ -26,10 +42,7 @@ export const tryApiPost = async (req, res, next) => {
       buatProduk: produk,
     });
   } catch (err) {
-    console.log(err);
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
+    if (!err.statusCode) err.statusCode = 500;
     next(err);
   }
 };
@@ -63,7 +76,8 @@ export const produkPatch = async (req, res, next) => {
   try {
     const id = req.params.produkId;
     const namaProduk = req.body.namaProduk;
-    const harga = req.body.harga;
+    const harga = +req.body.harga;
+    const errors = validationResult(req);
 
     let updateData = await Produk.findById(id);
     if (!updateData) {
@@ -72,14 +86,25 @@ export const produkPatch = async (req, res, next) => {
       throw error;
     }
     updateData.namaProduk = namaProduk;
-    updateData.harga = harga;
+    updateData.harga = +harga;
+
+    if (!errors.isEmpty()) {
+      let error = new Error(
+        `${errors.errors[0].msg} di bidang ${errors.errors[0].param}`
+      );
+      error.statusCode = 422;
+      throw error;
+    }
     await updateData.save();
     res.status(200).json({
       message: "dari produks Patch",
       updateData,
     });
   } catch (err) {
-    console.log(`error`, err);
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
   }
 };
 
@@ -87,11 +112,17 @@ export const produkDelete = async (req, res, next) => {
   try {
     const produkId = req.params.produkId;
     let data = await Produk.remove({ _id: produkId });
+    if (data.deletedCount === 0)
+      return res.status(404).json({
+        message: "Data Produt tidak ditemukan",
+      });
+
     res.status(200).json({
-      message: "dari produks delete",
+      message: "Berhasil Hapus Data dari produks delete",
       data,
     });
   } catch (err) {
-    console.log(`error`, err);
+    if (!err.statusCode) err.statusCode = 500;
+    next(err);
   }
 };
