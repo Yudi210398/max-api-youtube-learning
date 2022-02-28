@@ -33,6 +33,7 @@ export const tryApiPost = async (req, res, next) => {
       error.statusCode = 422;
       throw error;
     }
+
     const produk = await new Produk({
       namaProduk: req.body.namaProduk,
       harga: req.body.harga,

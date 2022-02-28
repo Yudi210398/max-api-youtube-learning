@@ -5,11 +5,31 @@ import routeOrder from "./router/routerOrders.js";
 import bodyParser from "body-parser";
 import morgan from "morgan";
 import mongoose from "mongoose";
+import multer from "multer";
+import { uuid } from "uuidv4";
 
 const app = express();
 const port = 3000;
 const __dirname = path.resolve();
 
+const simpanFileMulter = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, uuid());
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  )
+    cb(null, true);
+  else cb(null, false);
+};
 // ! Cors Handle
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -24,6 +44,10 @@ app.use((req, res, next) => {
 app.use(morgan("dev"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(
+  multer({ storage: simpanFileMulter, fileFilter: fileFilter }).single("image")
+);
+app.use(express.static(path.join(__dirname, "images")));
 
 app.use("/produks", routeProduk);
 app.use("/orders", routeOrder);

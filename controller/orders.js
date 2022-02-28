@@ -3,14 +3,12 @@ import Orders from "../model/orders.js";
 export const ordersGet = async (req, res, next) => {
   try {
     let dataOrders = await Orders.find()
-      .populate("produkId")
+      .populate("produkId", "_id namaProduk harga createdAt updatedAt")
       .select("_id namaPembeli quantity produkId createdAt updatedAt");
-    console.log(dataOrders);
     let dataHasil = {
       JumlahData: dataOrders.length,
       dataOrders,
     };
-    console.log(dataHasil);
     if (dataHasil.dataOrders.length > 0)
       return res.status(200).json({
         message: "dari orders get",
@@ -43,9 +41,12 @@ export const ordersPost = async (req, res, next) => {
 export const ordersGetId = async (req, res, next) => {
   try {
     const id = req.params.orderId;
+    let dataOrders = await Orders.findById(id)
+      .populate("produkId", "_id namaProduk harga createdAt updatedAt")
+      .select("_id namaPembeli quantity produkId createdAt updatedAt");
     res.status(200).json({
       message: "dari orders GetId",
-      id,
+      dataOrders,
     });
   } catch (err) {
     if (!err.statusCode) err.statusCode = 500;
